@@ -8,5 +8,14 @@ I made this for myself, so the keyboard shortcuts are pretty focused on commonly
 - [Chrome](https://support.google.com/chrome/answer/157179?hl=en&co=GENIE.Platform%3DDesktop)
 - [Visual Studio Code](https://code.visualstudio.com/shortcuts/keyboard-shortcuts-macos.pdf)
 
-## Potential Enhancements
-- Adding a sleep mode (LEDs off, screen off) corresponding to the computer's sleep mode.
+## Latest Enhancements
+I needed a sleep mode, since the LEDs were so distracting. I cloned the Adafruit Sleep Mode code [in this repo](https://github.com/M-Eldin/Adafruit-MacroPad-RP2040-Sleep), which works as expected. 
+
+To implement your own Sleep Mode, you'd need these files from `lib`: 
+
+```
+adafruit_displayio_sh1107_wrapper.py
+autoscreen.py
+```
+
+You'd also need to modify the main `code.py` file. It should take only a few minutes. I wish I'd done this sooner!
