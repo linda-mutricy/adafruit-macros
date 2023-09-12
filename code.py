@@ -18,6 +18,8 @@ import terminalio
 from adafruit_display_shapes.rect import Rect
 from adafruit_display_text import label
 from adafruit_macropad import MacroPad
+from autoscreen import AutoOffScreen
+from adafruit_displayio_sh1107_wrapper import SH1107_Wrapper
 import digitalio
 import adafruit_debouncer
 
@@ -37,9 +39,12 @@ class App:
         self.name = appdata['name']
         self.macros = appdata['macros']
 
-    def sleep(self):
-        macropad.display_sleep
-        macropad.pixels.brightness = 0
+    def set_pixels(self):
+        for i in range(12):
+            if i < len(self.macros):
+                macropad.pixels[i] = self.macros[i][0]
+            else:
+                macropad.pixels[i] = 0
 
     def switch(self):
         """ Activate application settings; update OLED labels and LED
@@ -65,6 +70,10 @@ class App:
 macropad = MacroPad()
 macropad.display.auto_refresh = False
 macropad.pixels.auto_write = False
+
+autoscreen = AutoOffScreen(15 * 60)
+
+display_sleeper = SH1107_Wrapper(macropad.display)
 
 # Set up displayio group with all the labels
 group = displayio.Group()
@@ -111,8 +120,28 @@ apps[app_index].switch()
 
 # MAIN LOOP ----------------------------
 
+autoscreen = AutoOffScreen(60 * 5)
+
+def lights_on():
+    print("lights on!")
+    display_sleeper.wake()
+    macropad.pixels.brightness = 1
+    apps[app_index].set_pixels()
+
+def lights_out():
+    print("lights out!")
+    display_sleeper.sleep()
+    macropad.pixels.brightness = 0 
+    macropad.pixels[0] = 0x002200
+    macropad.pixels.show()
+
+autoscreen.handle_on = lights_on
+autoscreen.handle_off = lights_out
+
+last_light_status = True
+
 while True:
-    # double-click to sleep
+    autoscreen.poll()
 
     # Read encoder position. If it's changed, switch apps.
     position = macropad.encoder
@@ -209,16 +238,3 @@ while True:
         if key_number < 12: # No pixel for encoder button
             macropad.pixels[key_number] = apps[app_index].macros[key_number][0]
             macropad.pixels.show()
-
-# SLEEP MODE ------------------------------------------
-# currently not working!
-# https://docs.circuitpython.org/projects/debouncer/en/latest/api.html#adafruit_debouncer.Button.short_count
-button_pin = digitalio.DigitalInOut(board.GP18)
-button_pin.direction = digitalio.Direction.INPUT
-button_pin.pull = digitalio.Pull.UP
-switch = Debouncer(button_pin)
-
-while True:
-    switch.update()
-    if switch.short_count == 2:
-        apps[0].sleep()
